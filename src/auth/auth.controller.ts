@@ -21,7 +21,7 @@ import { ConfigService } from '@nestjs/config';
 import { AuthService } from './auth.service';
 import { LocalAuthGuard } from 'src/jwt/local-auth.guard';
 import { JwtAuthGuard } from '../jwt/jwt-auth.guard';
-import { SignUpDto } from '../dto/signup.dto';
+import { SignUpDto } from './signup.dto';
 import { RecoverPasswordDto } from 'src/recover-password.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
@@ -49,7 +49,7 @@ export class AuthController {
       await this.authService.register(
         signUpDto.email,
         signUpDto.password,
-        signUpDto.name,
+        signUpDto.nombre,
       );
       return { message: 'Usuario creado exitosamente' };
     } catch (error) {
