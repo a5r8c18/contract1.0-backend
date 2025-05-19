@@ -21,7 +21,7 @@ import { UserModule } from './user/user.module';
         type: 'postgres',
         url: configService.get<string>('DATABASE_URL'),
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
-        synchronize: true, // Desactiva en producción
+        synchronize: false, // Desactiva en producción
       }),
       inject: [ConfigService],
     }),

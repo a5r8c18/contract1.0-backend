@@ -4,11 +4,12 @@ import { AppModule } from './app.module';
 import { join } from 'path';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { ConfigService } from '@nestjs/config';
+import { config } from 'dotenv';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   const configService = app.get(ConfigService);
-
+ config ();
   // Configurar activos estáticos para avatares
   app.useStaticAssets(join(__dirname, '..', 'Uploads'), {
     prefix: '/Uploads/',
