@@ -12,7 +12,7 @@ export class User {
   @Column()
   password: string; // La contraseña debe estar hasheada
 
-  @Column()
+  @Column({ type: 'text' })
   nombre: string;
 
   @Column({ default: 'user' })
