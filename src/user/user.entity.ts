@@ -12,8 +12,8 @@ export class User {
   @Column()
   password: string; // La contraseña debe estar hasheada
 
-  @Column({ type: 'text' })
-  nombre: string;
+  @Column({ type: 'text', array: true })
+  nombre: string[];
 
   @Column({ default: 'user' })
   rol: string; // Puede ser 'admin', 'user', etc.
