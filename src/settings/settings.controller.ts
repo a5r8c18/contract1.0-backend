@@ -14,7 +14,7 @@ export class SettingsController {
   @UseGuards(JwtAuthGuard)
   @Get()
   async getSettings(@Req() req: any): Promise<any> {
-    return this.settingsService.getSettings(req.user.sub);
+    return this.settingsService.getSettings(req.user.id);
   }
 
   @UseGuards(JwtAuthGuard)
