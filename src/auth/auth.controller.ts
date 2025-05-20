@@ -26,6 +26,7 @@ import { RecoverPasswordDto } from 'src/recover-password.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
+import * as fs from 'fs';
 
 @Controller('auth')
 export class AuthController {
@@ -83,7 +84,12 @@ export class AuthController {
     FileInterceptor('avatar', {
       storage: diskStorage({
         destination: (req, file, cb) => {
-          cb(null, process.env.AVATAR_STORAGE_PATH || './Uploads/avatars');
+          const uploadPath =
+            process.env.AVATAR_STORAGE_PATH || './Uploads/avatars';
+          if (!fs.existsSync(uploadPath)) {
+            fs.mkdirSync(uploadPath, { recursive: true });
+          }
+          cb(null, uploadPath);
         },
         filename: (req, file, cb) => {
           const filename = `avatar-${Date.now()}${extname(file.originalname)}`;
