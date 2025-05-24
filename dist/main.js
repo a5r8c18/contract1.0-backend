@@ -4,9 +4,11 @@ const core_1 = require("@nestjs/core");
 const app_module_1 = require("./app.module");
 const path_1 = require("path");
 const config_1 = require("@nestjs/config");
+const dotenv_1 = require("dotenv");
 async function bootstrap() {
     const app = await core_1.NestFactory.create(app_module_1.AppModule);
     const configService = app.get(config_1.ConfigService);
+    (0, dotenv_1.config)();
     app.useStaticAssets((0, path_1.join)(__dirname, '..', 'Uploads'), {
         prefix: '/Uploads/',
     });

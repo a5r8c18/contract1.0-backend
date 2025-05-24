@@ -22,7 +22,7 @@ let SettingsController = class SettingsController {
         this.settingsService = settingsService;
     }
     async getSettings(req) {
-        return this.settingsService.getSettings(req.user.sub);
+        return this.settingsService.getSettings(req.user.id);
     }
     async updateSettings(req, updateData) {
         return this.settingsService.updateSettings(req.user.sub, updateData);

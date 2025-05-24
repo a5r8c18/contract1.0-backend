@@ -19,11 +19,12 @@ const config_1 = require("@nestjs/config");
 const auth_service_1 = require("./auth.service");
 const local_auth_guard_1 = require("../jwt/local-auth.guard");
 const jwt_auth_guard_1 = require("../jwt/jwt-auth.guard");
-const signup_dto_1 = require("../dto/signup.dto");
+const signup_dto_1 = require("./signup.dto");
 const recover_password_dto_1 = require("../recover-password.dto");
 const platform_express_1 = require("@nestjs/platform-express");
 const multer_1 = require("multer");
 const path_1 = require("path");
+const fs = require("fs");
 let AuthController = AuthController_1 = class AuthController {
     authService;
     configService;
@@ -38,7 +39,7 @@ let AuthController = AuthController_1 = class AuthController {
     }
     async signUp(signUpDto) {
         try {
-            await this.authService.register(signUpDto.email, signUpDto.password, signUpDto.name);
+            await this.authService.register(signUpDto.email, signUpDto.password, signUpDto.nombre);
             return { message: 'Usuario creado exitosamente' };
         }
         catch (error) {
@@ -155,7 +156,11 @@ __decorate([
     (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)('avatar', {
         storage: (0, multer_1.diskStorage)({
             destination: (req, file, cb) => {
-                cb(null, process.env.AVATAR_STORAGE_PATH || './Uploads/avatars');
+                const uploadPath = process.env.AVATAR_STORAGE_PATH || './Uploads/avatars';
+                if (!fs.existsSync(uploadPath)) {
+                    fs.mkdirSync(uploadPath, { recursive: true });
+                }
+                cb(null, uploadPath);
             },
             filename: (req, file, cb) => {
                 const filename = `avatar-${Date.now()}${(0, path_1.extname)(file.originalname)}`;

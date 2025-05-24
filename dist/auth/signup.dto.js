@@ -14,7 +14,7 @@ const class_validator_1 = require("class-validator");
 class SignUpDto {
     email;
     password;
-    name;
+    nombre;
 }
 exports.SignUpDto = SignUpDto;
 __decorate([
@@ -29,5 +29,5 @@ __decorate([
 __decorate([
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
-], SignUpDto.prototype, "name", void 0);
+], SignUpDto.prototype, "nombre", void 0);
 //# sourceMappingURL=signup.dto.js.map

@@ -8,6 +8,7 @@ import { ContractModule } from './contract/contract.module';
 import { AuthModule } from './auth/auth.module';
 import { SettingsModule } from './settings/settings.module';
 import { UserModule } from './user/user.module';
+import { PdfModule } from './pdf/pdf.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { UserModule } from './user/user.module';
     AuthModule,
     SettingsModule,
     UserModule,
+    PdfModule,
   ],
   controllers: [AppController],
   providers: [AppService],

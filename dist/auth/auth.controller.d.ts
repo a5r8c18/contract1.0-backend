@@ -1,6 +1,6 @@
 import { ConfigService } from '@nestjs/config';
 import { AuthService } from './auth.service';
-import { SignUpDto } from '../dto/signup.dto';
+import { SignUpDto } from './signup.dto';
 import { RecoverPasswordDto } from 'src/recover-password.dto';
 export declare class AuthController {
     private readonly authService;
