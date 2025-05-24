@@ -1,41 +1,28 @@
 /* eslint-disable prettier/prettier */
-/* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { Injectable } from '@nestjs/common';
-import * as puppeteer from 'puppeteer';
-import { FormData } from '../interfaces/from-data.interface';
-import { generateContractHtml } from '../templates/contract.template';
+import * as PDFDocument from 'pdfkit';
 
 @Injectable()
 export class PdfService {
-  async generatePdf(formData: FormData): Promise<Buffer> {
-    let browser;
-    try {
-      browser = await puppeteer.launch({
-        headless: true,
-        args: ['--no-sandbox', '--disable-setuid-sandbox'],
-      });
-      const page = await browser.newPage();
+  async generatePDF(formData: any): Promise<Buffer> {
+    return new Promise((resolve) => {
+      const doc = new PDFDocument();
+      const buffers: Buffer[] = [];
 
-      const htmlContent = generateContractHtml(formData);
-      await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
-
-      const pdfBuffer = await page.pdf({
-        format: 'A4',
-        printBackground: true,
-        margin: { top: '15mm', bottom: '15mm', left: '10mm', right: '10mm' },
-        preferCSSPageSize: true,
+      doc.on('data', buffers.push.bind(buffers));
+      doc.on('end', () => {
+        const pdfBuffer = Buffer.concat(buffers);
+        resolve(pdfBuffer);
       });
 
-      return pdfBuffer;
-    } catch (error) {
-      throw new Error(`Error generando el PDF: ${error.message}`);
-    } finally {
-      if (browser) {
-        await browser.close();
-      }
-    }
+      doc.fontSize(16).text('Contrato de Arrendamiento', { align: 'center' });
+      doc.fontSize(12).text(`Arrendador: ${formData.arrendadorNombre}`);
+      doc.text(`Arrendatario: ${formData.arrendatarioNombre}`);
+      // Agrega más contenido según el contrato
+      doc.end();
+    });
   }
 }
