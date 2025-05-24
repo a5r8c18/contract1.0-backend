@@ -15,7 +15,7 @@ export class PdfService {
     return new Promise((resolve) => {
       const doc = new PDFDocument({
         size: 'A4',
-        margins: { top: 28.35, bottom: 28.35, left: 28.35, right: 28.35 }, // 10mm margins (1mm = 2.835 points)
+        margins: { top: 28.35, bottom: 28.35, left: 28.35, right: 28.35 }, // 10mm margins
       });
       const buffers: Buffer[] = [];
 
@@ -38,25 +38,37 @@ export class PdfService {
       doc.font('ArialNarrow').fontSize(14);
 
       // Helper function to add text with wrapping and alignment
-      const addText = (text: string, x: number, y: number, options: { align?: 'left' | 'right' | 'center' | 'justify'; indent?: number } = {}) => {
-        doc.text(text, x + (options.indent || 0), y, {
+      interface TextOptions {
+        align?: 'left' | 'right' | 'center' | 'justify';
+        indent?: number;
+        width?: number;
+      }
+
+      const addText = (text: string, x: number, y: number, options: TextOptions = {}) => {
+        const pageWidth = 595.35; // A4 width in points
+        const margin = 28.35; // Left and right margin
+        const textWidth = pageWidth - 2 * margin; // 538.65 points
+        doc.text(text, x, y, {
           ...options,
-          width: 190 * 2.835 - 2 * 28.35, // 190mm width - margins
-          align: options.align || 'justify', // Default to justified text
+          width: textWidth,
+          align: options.align || 'justify',
         });
       };
 
       // Helper function to add a section title
       const addSectionTitle = (title: string) => {
         doc.font('ArialNarrow-Bold').fontSize(16);
-        addText(title, 28.35, doc.y, { align: 'center' }); // Centered title
+        addText(title, 28.35, doc.y, { align: 'center' });
         doc.font('ArialNarrow').fontSize(14);
         doc.moveDown(1);
       };
 
       // Helper function to add a table
       const addTable = (headers: string[], rows: any[], startX: number, startY: number) => {
-        const colWidths = [100, 100, 100, 100]; // Adjust as needed
+        const pageWidth = 595.35;
+        const margin = 28.35;
+        const tableWidth = pageWidth - 2 * margin; // 538.65 points
+        const colWidths = [tableWidth / 4, tableWidth / 4, tableWidth / 4, tableWidth / 4]; // Equal columns
         const rowHeight = 20;
         let y = startY;
 
@@ -65,7 +77,7 @@ export class PdfService {
         headers.forEach((header, i) => {
           doc.rect(startX + colWidths.slice(0, i).reduce((a, b) => a + b, 0), y, colWidths[i], rowHeight)
             .fillAndStroke('#f0f0f0', '#000000');
-          addText(header, startX + colWidths.slice(0, i).reduce((a, b) => a + b, 0) + 4, y + 4, { align: 'center' });
+          addText(header, startX + colWidths.slice(0, i).reduce((a, b) => a + b, 0) + 4, y + 4, { align: 'center', width: colWidths[i] - 8 });
         });
         y += rowHeight;
 
@@ -75,7 +87,7 @@ export class PdfService {
           row.forEach((cell: string, i: number) => {
             doc.rect(startX + colWidths.slice(0, i).reduce((a, b) => a + b, 0), y, colWidths[i], rowHeight)
               .stroke();
-            addText(cell, startX + colWidths.slice(0, i).reduce((a, b) => a + b, 0) + 4, y + 4, { align: 'justify' });
+            addText(cell, startX + colWidths.slice(0, i).reduce((a, b) => a + b, 0) + 4, y + 4, { align: 'justify', width: colWidths[i] - 8 });
           });
           y += rowHeight;
         });
