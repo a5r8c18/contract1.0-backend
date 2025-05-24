@@ -1,7 +1,6 @@
 /* eslint-disable prettier/prettier */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-return */
-/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
@@ -27,23 +26,30 @@ export class PdfService {
       });
 
       // Register Arial Narrow fonts
-      const fontPathRegular = path.join(__dirname, '../../fonts/arialn.ttf');
-      const fontPathBold = path.join(__dirname, '../../fonts/arialnb.ttf');
+      const fontPathRegular = path.join(process.cwd(), 'fonts/arialn.ttf');
+      const fontPathBold = path.join(process.cwd(), 'fonts/arialnb.ttf');
+      if (!fs.existsSync(fontPathRegular) || !fs.existsSync(fontPathBold)) {
+        throw new Error(`Font files not found at ${fontPathRegular} or ${fontPathBold}`);
+      }
       doc.registerFont('ArialNarrow', fontPathRegular);
       doc.registerFont('ArialNarrow-Bold', fontPathBold);
 
       // Set default font and size
       doc.font('ArialNarrow').fontSize(14);
 
-      // Helper function to add text with wrapping
-      const addText = (text: string, x: number, y: number, options = {}) => {
-        doc.text(text, x, y, { ...options, width: 190 * 2.835 - 2 * 28.35 }); // 190mm width - margins
+      // Helper function to add text with wrapping and alignment
+      const addText = (text: string, x: number, y: number, options: { align?: 'left' | 'right' | 'center' | 'justify'; indent?: number } = {}) => {
+        doc.text(text, x + (options.indent || 0), y, {
+          ...options,
+          width: 190 * 2.835 - 2 * 28.35, // 190mm width - margins
+          align: options.align || 'justify', // Default to justified text
+        });
       };
 
       // Helper function to add a section title
       const addSectionTitle = (title: string) => {
         doc.font('ArialNarrow-Bold').fontSize(16);
-        addText(title, 28.35, doc.y, { align: 'center' });
+        addText(title, 28.35, doc.y, { align: 'center' }); // Centered title
         doc.font('ArialNarrow').fontSize(14);
         doc.moveDown(1);
       };
@@ -59,7 +65,7 @@ export class PdfService {
         headers.forEach((header, i) => {
           doc.rect(startX + colWidths.slice(0, i).reduce((a, b) => a + b, 0), y, colWidths[i], rowHeight)
             .fillAndStroke('#f0f0f0', '#000000');
-          addText(header, startX + colWidths.slice(0, i).reduce((a, b) => a + b, 0) + 4, y + 4);
+          addText(header, startX + colWidths.slice(0, i).reduce((a, b) => a + b, 0) + 4, y + 4, { align: 'center' });
         });
         y += rowHeight;
 
@@ -69,7 +75,7 @@ export class PdfService {
           row.forEach((cell: string, i: number) => {
             doc.rect(startX + colWidths.slice(0, i).reduce((a, b) => a + b, 0), y, colWidths[i], rowHeight)
               .stroke();
-            addText(cell, startX + colWidths.slice(0, i).reduce((a, b) => a + b, 0) + 4, y + 4);
+            addText(cell, startX + colWidths.slice(0, i).reduce((a, b) => a + b, 0) + 4, y + 4, { align: 'justify' });
           });
           y += rowHeight;
         });
@@ -260,10 +266,10 @@ Ningún acto de intercambio será interpretado como cesión de los derechos de l
         doc.y
       );
       doc.moveDown(2);
-      addText('___________________', 28.35, doc.y);
-      addText('EL ARRENDADOR', 28.35, doc.y);
-      addText('___________________', 28.35 + 300, doc.y - 20);
-      addText('EL ARRENDATARIO', 28.35 + 300, doc.y);
+      addText('___________________', 28.35, doc.y, { align: 'left' });
+      addText('EL ARRENDADOR', 28.35, doc.y, { align: 'left' });
+      addText('___________________', 28.35 + 300, doc.y - 20, { align: 'left' });
+      addText('EL ARRENDATARIO', 28.35 + 300, doc.y, { align: 'left' });
 
       // Page 3: Anexo II
       doc.addPage();
