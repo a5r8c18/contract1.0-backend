@@ -58,6 +58,11 @@ export class PdfService {
     const rowHeight = 20;
     let y = startY;
 
+    // Check if table will overflow page
+    const pageHeight = 842.65; // A4 height in points
+    const bottomMargin = 28.35;
+    const maxY = pageHeight - bottomMargin;
+
     // Draw headers
     doc.font('ArialNarrow-Bold');
     headers.forEach((header, i) => {
@@ -70,6 +75,19 @@ export class PdfService {
     // Draw rows
     doc.font('ArialNarrow');
     rows.forEach((row) => {
+      if (y + rowHeight > maxY) {
+        doc.addPage();
+        y = 28.35; // Reset to top margin
+        // Redraw headers on new page
+        doc.font('ArialNarrow-Bold');
+        headers.forEach((header, i) => {
+          doc.rect(startX + finalColWidths.slice(0, i).reduce((a, b) => a + b, 0), y, finalColWidths[i], rowHeight)
+            .fillAndStroke('#f0f0f0', '#000000');
+          this.addText(doc, header, startX + finalColWidths.slice(0, i).reduce((a, b) => a + b, 0) + 4, y + 4, { align: 'center', width: finalColWidths[i] - 8 });
+        });
+        y += rowHeight;
+        doc.font('ArialNarrow');
+      }
       row.forEach((cell: string, i: number) => {
         doc.rect(startX + finalColWidths.slice(0, i).reduce((a, b) => a + b, 0), y, finalColWidths[i], rowHeight)
           .stroke();
@@ -78,6 +96,17 @@ export class PdfService {
       y += rowHeight;
     });
 
+    return y;
+  }
+
+  private checkPageOverflow(doc: PDFDocument, y: number): number {
+    const pageHeight = 842.65; // A4 height in points
+    const bottomMargin = 28.35;
+    const maxY = pageHeight - bottomMargin;
+    if (y > maxY - 20) { // Leave room for at least one row or line
+      doc.addPage();
+      return 28.35; // Reset to top margin
+    }
     return y;
   }
 
@@ -376,168 +405,205 @@ Ningún acto de intercambio será interpretado como cesión de los derechos de l
         resolve(pdfBuffer);
       });
 
+      let y = 28.35; // Start at top margin
+
       // Title
       this.addSectionTitle(doc, 'CONTRATO DE COMODATO');
+      y = this.checkPageOverflow(doc, doc.y);
 
       // DE UNA PARTE
       this.addSectionTitle(doc, 'DE UNA PARTE');
+      y = this.checkPageOverflow(doc, doc.y);
       this.addText(
         doc,
-        `${formData.comodanteNombre}, de nacionalidad ${formData.comodanteNacionalidad}, con domicilio social en ${formData.comodanteDomicilio}, municipio ${formData.comodanteMunicipio}, provincia La Habana, con carnet de identidad permanente ${formData.comodanteIdentidad}, que en lo sucesivo y a los efectos del presente Contrato se denominará EL COMODANTE.`,
+        `${formData.comodanteNombre || 'Nombre del comodante'}, de nacionalidad ${formData.comodanteNacionalidad || 'Nacionalidad'}, con domicilio social en ${formData.comodanteDomicilio || 'Domicilio'}, municipio ${formData.comodanteMunicipio || 'Municipio'}, provincia La Habana, con carnet de identidad permanente ${formData.comodanteIdentidad || 'Identidad'}, que en lo sucesivo y a los efectos del presente Contrato se denominará EL COMODANTE.`,
         28.35,
-        doc.y
+        y
       );
       doc.moveDown(1);
+      y = this.checkPageOverflow(doc, doc.y);
 
       // DE OTRA PARTE
       this.addSectionTitle(doc, 'DE OTRA PARTE');
+      y = this.checkPageOverflow(doc, doc.y);
       this.addText(
         doc,
-        `${formData.comodatarioNombre}, constituida mediante ${formData.comodatarioConstitucion}, con domicilio legal en ${formData.comodatarioDomicilio}, municipio ${formData.comodatarioMunicipio}, provincia ${formData.comodatarioProvincia}, de nacionalidad ${formData.comodatarioNacionalidad}, código REEUP y NIT: ${formData.comodatarioREEUPNIT}, Inscripción Registro Mercantil Libro ${formData.comodatarioLibro}, Tomo ${formData.comodatarioTomo}, Folio ${formData.comodatarioFolio}, Hoja ${formData.comodatarioHoja}, Cuenta bancaria No. ${formData.comodatarioCuentaBancaria}, teléfonos ${formData.comodatarioTelefonos}, dirección electrónica: ${formData.comodatarioEmail}, representada en este acto por ${formData.comodatarioRepresentante} en su condición de ${formData.comodatarioCondicion}, lo que acredita mediante ${formData.comodatarioDecision} de fecha ${formData.comodatarioDecisionFecha}, emitida por ${formData.comodatarioEmitidaPor}, que en lo sucesivo y a los efectos de este contrato se denominará EL COMODATARIO.`,
+        `${formData.comodatarioNombre || 'Nombre del comodatario'}, constituida mediante ${formData.comodatarioConstitucion || 'Constitución'}, con domicilio legal en ${formData.comodatarioDomicilio || 'Domicilio'}, municipio ${formData.comodatarioMunicipio || 'Municipio'}, provincia ${formData.comodatarioProvincia || 'Provincia'}, de nacionalidad ${formData.comodatarioNacionalidad || 'Nacionalidad'}, código REEUP y NIT: ${formData.comodatarioREEUPNIT || 'REEUP y NIT'}, Inscripción Registro Mercantil Libro ${formData.comodatarioLibro || 'Libro'}, Tomo ${formData.comodatarioTomo || 'Tomo'}, Folio ${formData.comodatarioFolio || 'Folio'}, Hoja ${formData.comodatarioHoja || 'Hoja'}, Cuenta bancaria No. ${formData.comodatarioCuentaBancaria || 'Cuenta bancaria'}, teléfonos ${formData.comodatarioTelefonos || 'Teléfonos'}, dirección electrónica: ${formData.comodatarioEmail || 'Email'}, representada en este acto por ${formData.comodatarioRepresentante || 'Representante'} en su condición de ${formData.comodatarioCondicion || 'Condición'}, lo que acredita mediante ${formData.comodatarioDecision || 'Decisión'} de fecha ${formData.comodatarioDecisionFecha || ''}, emitida por ${formData.comodatarioEmitidaPor || 'Emitida por'}, que en lo sucesivo y a los efectos de este contrato se denominará EL COMODATARIO.`,
         28.35,
-        doc.y
+        y
       );
       doc.moveDown(1);
+      y = this.checkPageOverflow(doc, doc.y);
 
       // AMBAS PARTES
       this.addSectionTitle(doc, 'AMBAS PARTES');
+      y = this.checkPageOverflow(doc, doc.y);
       this.addText(
         doc,
-        'Reconociéndose respectivamente su capacidad y representación con que comparecen convienen suscribir el presente Contrato bajo los términos y condiciones siguientes:',
+        'Reconociéndose respectivamente la capacidad y representación con que comparecen convienen suscribir el presente Contrato bajo los términos y condiciones siguientes:',
         28.35,
-        doc.y
+        y
       );
       doc.moveDown(1);
+      y = this.checkPageOverflow(doc, doc.y);
 
       // 1. OBJETO DEL CONTRATO
       this.addSectionTitle(doc, '1. OBJETO DEL CONTRATO');
+      y = this.checkPageOverflow(doc, doc.y);
       this.addText(
         doc,
-        `1.1 Por el presente contrato EL COMODANTE se obliga a ceder gratuitamente al COMODATARIO el uso del ${formData.bienDescripción} cuyas descripciones aparecen detalladas en el ANEXO 1 al presente y EL COMODATARIO los devolverá una vez finalizado el tiempo pactado.\n1.2 EL COMODANTE declara que es propietario de los bienes que cede en comodato los cuales se destinarán al cumplimiento del Objeto Social aprobado a la empresa, estándole prohibido a EL COMODATARIO modificar el destino antes mencionado.`,
+        `1.1 Por el presente contrato EL COMODANTE se obliga a ceder gratuitamente al COMODATARIO el uso del ${formData.bienDescripción || 'Descripción del bien'} cuyas descripciones aparecen detalladas en el ANEXO 1 al presente y EL COMODATARIO los devolverá una vez finalizado el tiempo pactado.\n1.2 EL COMODANTE declara que es propietario de los bienes que cede en comodato los cuales se destinarán al cumplimiento del Objeto Social aprobado a la empresa, estándole prohibido a EL COMODATARIO modificar el destino antes mencionado.`,
         28.35,
-        doc.y
+        y
       );
       doc.moveDown(1);
+      y = this.checkPageOverflow(doc, doc.y);
 
       // 2. OBLIGACIONES DE LAS PARTES
       this.addSectionTitle(doc, '2. OBLIGACIONES DE LAS PARTES');
+      y = this.checkPageOverflow(doc, doc.y);
       this.addText(
         doc,
-        `2.1 Obligaciones de EL COMODANTE:\n2.1.1 Entregar el bien en comodato referido en el ANEXO 1 del presente contrato a EL COMODATARIO.\n2.1.2 Garantizar a EL COMODATARIO la posesión pacífica del bien durante la vigencia del presente.\n2.1.3 Pagar los gastos extraordinarios en que haya incurrido EL COMODATARIO como consecuencia de la conservación del bien siempre que este le haya informado de tales pagos debidamente justificados.\n2.1.4 Reembolsar a EL COMODATARIO los gastos en que haya incurrido por daños originados por vicios ocult.
-2.2 Obligaciones de EL COMODATARIO:\n2.2.1 Usar el bien de acuerdo al destino señalado en la sub cláusula 1.2.\n2.2.2 Responder por los daños ocasionados al bien cuando lo use de modo contrario a lo pactado o a su naturaleza o destino.\n2.2.3 Pagar los gastos ordinarios que se derivan del uso y conservación del bien.\n2.2.4 Devolver el bien en el plazo previsto en el presente contrato.`,
+        `2.1 Obligaciones de EL COMODANTE:\n2.1.1 Entregar el bien en comodato referido en el ANEXO 1 del presente contrato a EL COMODATARIO.\n2.1.2 Garantizar a EL COMODATARIO la posesión pacífica del bien durante la vigencia del presente.\n2.1.3 Pagar los gastos extraordinarios en que haya incurrido EL COMODATARIO como consecuencia de la conservación del bien siempre que este le haya informado de tales pagos debidamente justificados.\n2.1.4 Reembolsar a EL COMODATARIO los gastos en que haya incurrido por daños originados por vicios ocultos del bien, siempre que los conociere y no los hubiese advertido oportunamente.\n2.2 Obligaciones de EL COMODATARIO:\n2.2.1 Usar el bien de acuerdo al destino señalado en la sub cláusula 1.2.\n2.2.2 Responder por los daños ocasionados al bien cuando lo use de modo contrario a lo pactado o a su naturaleza o destino.\n2.2.3 Pagar los gastos ordinarios que se derivan del uso y conservación del bien.\n2.2.4 Devolver el bien en el plazo previsto en el presente contrato.`,
         28.35,
-        doc.y
+        y
       );
       doc.moveDown(1);
+      y = this.checkPageOverflow(doc, doc.y);
 
       // 3. CESIÓN
       this.addSectionTitle(doc, '3. CESIÓN');
+      y = this.checkPageOverflow(doc, doc.y);
       this.addText(
         doc,
         `3.1 EL COMODATARIO no podrá ceder el bien objeto del presente a un tercero a menos que lo autorice EL COMODANTE.`,
         28.35,
-        doc.y
+        y
       );
       doc.moveDown(1);
+      y = this.checkPageOverflow(doc, doc.y);
 
       // 4. VIGENCIA, MODIFICACIÓN Y EXTINCIÓN DEL CONTRATO
       this.addSectionTitle(doc, '4. VIGENCIA, MODIFICACIÓN Y EXTINCIÓN DEL CONTRATO');
+      y = this.checkPageOverflow(doc, doc.y);
       this.addText(
         doc,
-        `4.1 La duración del presente Contrato será de ${formData.vigenciaAnios} años.\n4.1.1 LAS PARTES durante el cumplimiento del presente Contrato pueden acordar modificaciones a las obligaciones, condiciones y términos que se pactaron en el Contrato. Toda adición, modificación, especificación o enmienda que se pretenda realizar al presente Contrato, solamente podrá formalizarse mediante Suplementos que adquirirán plena validez y efecto legal a partir de la fecha de su firma por AMBAS PARTES contratantes.\n4.1.2 El presente Contrato se extinguirá por las siguientes causas:\n4.1.3 Muerte de EL COMODANTE o de EL COMODATARIO.\n4.1.4 Destinar EL COMODATARIO el bien a un uso incompatible con su naturaleza o distinto del pactado.\n4.1.5 Ceder EL COMODATARIO, sin permiso, a un tercero, el uso del bien.\n4.1.6 Reclamar EL COMODANTE el bien antes de haber vencido el término del contrato o de haber concluido el uso convenido, por tener necesidad urgente de él siempre con al menos 15 días de antelación a la fecha en que pretenda que surta efectos.\n4.1.7 El resto de las causas generales de extinción de los contratos.`,
+        `4.1 La duración del presente Contrato será de ${formData.vigenciaAnios || 'Años'} años.\n4.1.1 LAS PARTES durante el cumplimiento del presente Contrato pueden acordar modificaciones a las obligaciones, condiciones y términos que se pactaron en el Contrato. Toda adición, modificación, especificación o enmienda que se pretenda realizar al presente Contrato, solamente podrá formalizarse mediante Suplementos que adquirirán plena validez y efecto legal a partir de la fecha de su firma por AMBAS PARTES contratantes.\n4.1.2 El presente Contrato se extinguirá por las siguientes causas:\n4.1.3 Muerte de EL COMODANTE o de EL COMODATARIO.\n4.1.4 Destinar EL COMODATARIO el bien a un uso incompatible con su naturaleza o distinto del pactado.\n4.1.5 Ceder EL COMODATARIO, sin permiso, a un tercero, el uso del bien.\n4.1.6 Reclamar EL COMODANTE el bien antes de haber vencido el término del contrato o de haber concluido el uso convenido, por tener necesidad urgente de él siempre con al menos 15 días de antelación a la fecha en que pretenda que surta efectos.\n4.1.7 El resto de las causas generales de extinción de los contratos.`,
         28.35,
-        doc.y
+        y
       );
       doc.moveDown(1);
+      y = this.checkPageOverflow(doc, doc.y);
 
       // 5. RECLAMACIONES
       this.addSectionTitle(doc, '5. RECLAMACIONES');
+      y = this.checkPageOverflow(doc, doc.y);
       this.addText(
         doc,
         `5.1 LAS PARTES podrán reclamarse mutuamente por el incumplimiento o cumplimiento inadecuado de sus obligaciones contractuales, por escrito, dentro de los quince (15) días naturales contados a partir de la fecha de ocurrencia del incumplimiento.\n5.2 Todas las reclamaciones se efectuarán por escrito en el domicilio legal de la otra Parte, debiendo la Parte reclamada dar respuesta dentro de los treinta (30) días naturales posteriores a la fecha de su notificación.\n5.3 Toda comunicación efectuada por medio del correo electrónico requerirá de su acuse de recibo como constancia de su recepción. De no recibirse el acuse en el término de cuarenta y ocho (48) horas, el emisor deberá utilizar otra vía de comunicación que permita poner en conocimiento del destinatario del correo electrónico que le ha sido enviada la información por la vía del correo electrónico.`,
         28.35,
-        doc.y
+        y
       );
       doc.moveDown(1);
+      y = this.checkPageOverflow(doc, doc.y);
 
       // 6. SOLUCIÓN DE CONFLICTOS
       this.addSectionTitle(doc, '6. SOLUCIÓN DE CONFLICTOS');
+      y = this.checkPageOverflow(doc, doc.y);
       this.addText(
         doc,
         `6.1 LAS PARTES se comprometen a cumplir el presente Contrato de buena fe, y a solucionar mediante negociaciones amigables las posibles discrepancias que surgieren en la ejecución del presente Contrato y/o en relación con el mismo, debiendo dejar evidencia escrita de las conciliaciones realizadas.\n6.2 De no llegarse a acuerdo someterán sus discrepancias a la decisión de la Sala de lo Económico del Tribunal Provincial Popular de La Habana, portando en todos los casos las evidencias escritas de las conciliaciones realizadas.`,
         28.35,
-        doc.y
+        y
       );
       doc.moveDown(1);
+      y = this.checkPageOverflow(doc, doc.y);
 
       // 7. AVISO ENTRE LAS PARTES
       this.addSectionTitle(doc, '7. AVISO ENTRE LAS PARTES');
+      y = this.checkPageOverflow(doc, doc.y);
       this.addText(
         doc,
         `7.1 Todos los avisos entre las partes se realizarán por correo electrónico u otros medios telemáticos y carta certificada a las siguientes direcciones:`,
         28.35,
-        doc.y
+        y
       );
       doc.moveDown(0.5);
+      y = this.checkPageOverflow(doc, doc.y);
 
       // A EL COMODANTE Table
       this.addSectionTitle(doc, 'A EL COMODANTE');
+      y = this.checkPageOverflow(doc, doc.y);
       const comodanteTable = [
-        ['Att.', formData.avisoComodanteAtt],
-        ['Dirección:', formData.avisoComodanteDireccion],
-        ['Teléfono:', formData.avisoComodanteTelefono],
-        ['E-mail:', formData.avisoComodanteEmail],
+        ['Att.', formData.avisoComodanteAtt || 'Atención'],
+        ['Dirección:', formData.avisoComodanteDireccion || 'Dirección'],
+        ['Teléfono:', formData.avisoComodanteTelefono || 'Teléfono'],
+        ['E-mail:', formData.avisoComodanteEmail || 'Email'],
       ];
-      doc.y = this.addTable(doc, ['Campo', 'Valor'], comodanteTable, 28.35, doc.y, [150, 388.65]);
+      y = this.addTable(doc, ['Campo', 'Valor'], comodanteTable, 28.35, y, [150, 388.65]);
       doc.moveDown(1);
+      y = this.checkPageOverflow(doc, y);
 
       // A EL COMODATARIO Table
       this.addSectionTitle(doc, 'A EL COMODATARIO');
+      y = this.checkPageOverflow(doc, doc.y);
       const comodatarioTable = [
-        ['Att.', formData.avisoComodatarioAtt],
-        ['Dirección:', formData.avisoComodatarioDireccion],
-        ['Teléfono:', formData.avisoComodatarioTelefono],
-        ['E-mail:', formData.avisoComodatarioEmail],
+        ['Att.', formData.avisoComodatarioAtt || 'Atención'],
+        ['Dirección:', formData.avisoComodatarioDireccion || 'Dirección'],
+        ['Teléfono:', formData.avisoComodatarioTelefono || 'Teléfono'],
+        ['E-mail:', formData.avisoComodatarioEmail || 'Email'],
       ];
-      doc.y = this.addTable(doc, ['Campo', 'Valor'], comodatarioTable, 28.35, doc.y, [150, 388.65]);
+      y = this.addTable(doc, ['Campo', 'Valor'], comodatarioTable, 28.35, y, [150, 388.65]);
       doc.moveDown(1);
+      y = this.checkPageOverflow(doc, y);
 
       // 8. OTRAS CONDICIONES
       this.addSectionTitle(doc, '8. OTRAS CONDICIONES');
+      y = this.checkPageOverflow(doc, doc.y);
       this.addText(
         doc,
         `8.1 EL COMODATARIO no puede retener el bien bajo pretexto de que EL COMODANTE es deudor de él, aun cuando se trate de gastos extraordinarios o costas.\n8.2 El presente Contrato se rige e interpreta de conformidad con lo establecido en la Ley No. 141/21 “Código de Procesos”, Resolución 183/2020 “Normas Bancarias para los Cobros y Pagos”, Decreto Ley No.304/2012 “De la Contratación Económica” y el Decreto No.310/2012 “De los Tipos de Contratos”, la Ley No.59/87 “Código Civil”, y demás disposiciones legales que le sean de aplicación.`,
         28.35,
-        doc.y
+        y
       );
       doc.moveDown(1);
+      y = this.checkPageOverflow(doc, doc.y);
 
       // Firma
       this.addText(
         doc,
-        `Y PARA QUE ASÍ CONSTE, se extienden y firman dos ejemplares en idioma español, a un mismo tenor e idénticos efectos legales, en La Habana, a los ${formData.firmaDia} días del mes de ${formData.firmaMes} de ${formData.firmaAnio}.`,
+        `Y PARA QUE ASÍ CONSTE, se extienden y firman dos ejemplares en idioma español, a un mismo tenor e idénticos efectos legales, en La Habana, a los ${formData.firmaDia || 'Día'} días del mes de ${formData.firmaMes || 'Mes'} de ${formData.firmaAnio || 'Año'}.`,
         28.35,
-        doc.y
+        y
       );
       doc.moveDown(2);
-      this.addText(doc, '___________________        ___________________', 28.35, doc.y, { align: 'justify' });
-      this.addText(doc, 'EL COMODANTE              EL COMODATARIO', 28.35, doc.y, { align: 'justify' });
+      y = this.checkPageOverflow(doc, doc.y);
+      this.addText(doc, '___________________', 28.35, y, { align: 'left' });
+      this.addText(doc, 'EL COMODANTE', 28.35, doc.y, { align: 'left' });
+      this.addText(doc, '___________________', 28.35 + 300, y - 20, { align: 'left' });
+      this.addText(doc, 'EL COMODATARIO', 28.35 + 300, doc.y, { align: 'left' });
+      y = this.checkPageOverflow(doc, doc.y + 20);
 
       // ANEXO 1: DESCRIPCIÓN DE LOS BIENES
       doc.addPage();
+      y = 28.35;
       this.addSectionTitle(doc, 'ANEXO 1: DESCRIPCIÓN DE LOS BIENES');
+      y = this.checkPageOverflow(doc, doc.y);
       const anexoHeaders = ['Nombres y Apellidos', 'Características', 'Marca', 'Modelo', 'Chapa'];
       const anexoRows = formData.anexoBienes.map((bien: any) => [
-        bien.nombre,
-        bien.caracteristicas,
-        bien.marca,
-        bien.modelo,
-        bien.chapa,
+        bien.nombre || 'Nombre',
+        bien.caracteristicas || 'Características',
+        bien.marca || 'Marca',
+        bien.modelo || 'Modelo',
+        bien.chapa || 'Chapa',
       ]);
-      doc.y = this.addTable(doc, anexoHeaders, anexoRows, 28.35, doc.y, [107.73, 107.73, 107.73, 107.73, 107.73]);
+      y = this.addTable(doc, anexoHeaders, anexoRows, 28.35, y, [100, 160, 100, 100, 78.65]); // Adjusted column widths
       doc.moveDown(2);
-      this.addText(doc, '___________________        ___________________', 28.35, doc.y, { align: 'justify' });
-      this.addText(doc, 'EL COMODANTE              EL COMODATARIO', 28.35, doc.y, { align: 'justify' });
+      y = this.checkPageOverflow(doc, doc.y);
+      this.addText(doc, '___________________', 28.35, y, { align: 'left' });
+      this.addText(doc, 'EL COMODANTE', 28.35, doc.y, { align: 'left' });
+      this.addText(doc, '___________________', 28.35 + 300, y - 20, { align: 'left' });
+      this.addText(doc, 'EL COMODATARIO', 28.35 + 300, doc.y, { align: 'left' });
 
       doc.end();
     });
