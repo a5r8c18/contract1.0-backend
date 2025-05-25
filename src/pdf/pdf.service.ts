@@ -1,12 +1,13 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-return */
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable prettier/prettier */
 import { Injectable } from '@nestjs/common';
-import PDFKit from 'pdfkit';
+import PDFKit from 'pdfkit'; // Importar constructor predeterminado y tipo
+import PDFDocument from 'pdfkit/js/pdfkit.standalone';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as SVGtoPDF from 'svg-to-pdfkit';
@@ -15,7 +16,7 @@ import { FormData } from 'src/interfaces/from-data.interface';
 
 @Injectable()
 export class PdfService {
-  private createPDFDocument(): any {
+  private createPDFDocument(): PDFDocument {
     const doc = new PDFKit({
       size: 'A4',
       margins: { top: 28.35, bottom: 28.35, left: 28.35, right: 28.35 }, // 10mm margins
@@ -35,7 +36,7 @@ export class PdfService {
     return doc;
   }
 
-  private addText(doc: any, text: string, x: number, y: number, options: { align?: 'left' | 'right' | 'center' | 'justify'; indent?: number; width?: number } = {}) {
+  private addText(doc: PDFDocument, text: string, x: number, y: number, options: { align?: 'left' | 'right' | 'center' | 'justify'; indent?: number; width?: number } = {}) {
     const pageWidth = 595.35; // A4 width in points
     const margin = 28.35; // Left and right margin
     const textWidth = pageWidth - 2 * margin; // 538.65 points
@@ -46,14 +47,14 @@ export class PdfService {
     });
   }
 
-  private addSectionTitle(doc: any, title: string) {
+  private addSectionTitle(doc: PDFDocument, title: string) {
     doc.font('ArialNarrow-Bold').fontSize(16);
     this.addText(doc, title, 28.35, doc.y, { align: 'center' });
     doc.font('ArialNarrow').fontSize(14);
     doc.moveDown(1);
   }
 
-  private addTable(doc: any, headers: string[], rows: any[], startX: number, startY: number, colWidths?: number[]) {
+  private addTable(doc: PDFDocument, headers: string[], rows: any[], startX: number, startY: number, colWidths?: number[]) {
     const pageWidth = 595.35;
     const margin = 28.35;
     const tableWidth = pageWidth - 2 * margin; // 538.65 points
@@ -103,7 +104,7 @@ export class PdfService {
     return y;
   }
 
-  private checkPageOverflow(doc: any, y: number): number {
+  private checkPageOverflow(doc: PDFDocument, y: number): number {
     const pageHeight = 842.65; // A4 height in points
     const bottomMargin = 28.35;
     const maxY = pageHeight - bottomMargin;
