@@ -343,11 +343,12 @@ Ningún acto de intercambio será interpretado como cesión de los derechos de l
       doc.end();
     });
   }
+  // Método para el contrato de comodato
   async generateComodatoPDF(formData: any): Promise<Buffer> {
     return new Promise((resolve) => {
       const doc = new PDFDocument({
         size: 'A4',
-        margins: { top: 28.35, bottom: 28.35, left: 28.35, right: 28.35 },
+        margins: { top: 28.35, bottom: 28.35, left: 28.35, right: 28.35 }, // Mismos márgenes que arrendamiento (10mm)
       });
       const buffers: Buffer[] = [];
 
@@ -368,7 +369,7 @@ Ningún acto de intercambio será interpretado como cesión de los derechos de l
 
       doc.font('ArialNarrow').fontSize(14);
 
-      // Funciones auxiliares (reutilizadas)
+      // Helper functions (idénticas al arrendamiento)
       interface TextOptions {
         align?: 'left' | 'right' | 'center' | 'justify';
         indent?: number;
@@ -529,6 +530,21 @@ Ningún acto de intercambio será interpretado como cesión de los derechos de l
         ['E-mail:', formData.avisoComodatarioEmail || 'Email'],
       ];
       doc.y = addTable(['Campo', 'Valor'], comodatarioRows, 28.35, doc.y);
+      doc.moveDown(1);
+
+      addSectionTitle('8. OTRAS CONDICIONES');
+      addText(
+        `8.1 EL COMODATARIO no puede retener el bien bajo pretexto de que EL COMODANTE es deudor de él, aun cuando se trate de gastos extraordinarios o costas.\n8.2 El presente Contrato se rige e interpreta de conformidad con lo establecido en la Ley No. 141/21 “Código de Procesos”, Resolución 183/2020 “Normas Bancarias para los Cobros y Pagos”, Decreto Ley No.304/2012 “De la Contratación Económica” y el Decreto No.310/2012 “De los Tipos de Contratos”, la Ley No.59/87 “Código Civil”, y demás disposiciones legales que le sean de aplicación.`,
+        28.35,
+        doc.y
+      );
+      doc.moveDown(1);
+
+      addText(
+        `Y PARA QUE ASÍ CONSTE, se extienden y firman dos ejemplares en idioma español, a un mismo tenor e idénticos efectos legales, en La Habana, a los ${formData.firmaDia} días del mes de ${formData.firmaMes} de ${formData.firmaAnio}.`,
+        28.35,
+        doc.y
+      );
       doc.moveDown(2);
       addText('___________________', 28.35, doc.y, { align: 'left' });
       addText('EL COMODANTE', 28.35, doc.y, { align: 'left' });
