@@ -17,4 +17,15 @@ export class PdfController {
     });
     res.send(pdfBuffer);
   }
+
+  @Post('generate-comodato')
+  async generateComodatoPDF(@Body() body: { formData: any }, @Res() res: Response) {
+    const pdfBuffer = await this.pdfService.generateComodatoPDF(body.formData);
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': 'attachment; filename=contrato_comodato.pdf',
+      'Content-Length': pdfBuffer.length.toString(),
+    });
+    res.send(pdfBuffer);
+  }
 }

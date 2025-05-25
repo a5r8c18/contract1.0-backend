@@ -11,11 +11,12 @@ import * as fs from 'fs';
 
 @Injectable()
 export class PdfService {
+  // Método original para el contrato de arrendamiento
   async generatePDF(formData: any): Promise<Buffer> {
     return new Promise((resolve) => {
       const doc = new PDFDocument({
         size: 'A4',
-        margins: { top: 28.35, bottom: 28.35, left: 28.35, right: 28.35 }, // 10mm margins
+        margins: { top: 28.35, bottom: 28.35, left: 28.35, right: 28.35 },
       });
       const buffers: Buffer[] = [];
 
@@ -34,10 +35,9 @@ export class PdfService {
       doc.registerFont('ArialNarrow', fontPathRegular);
       doc.registerFont('ArialNarrow-Bold', fontPathBold);
 
-      // Set default font and size
       doc.font('ArialNarrow').fontSize(14);
 
-      // Helper function to add text with wrapping and alignment
+      // Funciones auxiliares (igual que en el original)
       interface TextOptions {
         align?: 'left' | 'right' | 'center' | 'justify';
         indent?: number;
@@ -45,9 +45,9 @@ export class PdfService {
       }
 
       const addText = (text: string, x: number, y: number, options: TextOptions = {}) => {
-        const pageWidth = 595.35; // A4 width in points
-        const margin = 28.35; // Left and right margin
-        const textWidth = pageWidth - 2 * margin; // 538.65 points
+        const pageWidth = 595.35;
+        const margin = 28.35;
+        const textWidth = pageWidth - 2 * margin;
         doc.text(text, x, y, {
           ...options,
           width: textWidth,
@@ -55,7 +55,6 @@ export class PdfService {
         });
       };
 
-      // Helper function to add a section title
       const addSectionTitle = (title: string) => {
         doc.font('ArialNarrow-Bold').fontSize(16);
         addText(title, 28.35, doc.y, { align: 'center' });
@@ -63,16 +62,14 @@ export class PdfService {
         doc.moveDown(1);
       };
 
-      // Helper function to add a table
       const addTable = (headers: string[], rows: any[], startX: number, startY: number) => {
         const pageWidth = 595.35;
         const margin = 28.35;
-        const tableWidth = pageWidth - 2 * margin; // 538.65 points
-        const colWidths = [tableWidth / 4, tableWidth / 4, tableWidth / 4, tableWidth / 4]; // Equal columns
+        const tableWidth = pageWidth - 2 * margin;
+        const colWidths = headers.map(() => tableWidth / headers.length);
         const rowHeight = 20;
         let y = startY;
 
-        // Draw headers
         doc.font('ArialNarrow-Bold');
         headers.forEach((header, i) => {
           doc.rect(startX + colWidths.slice(0, i).reduce((a, b) => a + b, 0), y, colWidths[i], rowHeight)
@@ -81,7 +78,6 @@ export class PdfService {
         });
         y += rowHeight;
 
-        // Draw rows
         doc.font('ArialNarrow');
         rows.forEach((row) => {
           row.forEach((cell: string, i: number) => {
@@ -343,6 +339,222 @@ Ningún acto de intercambio será interpretado como cesión de los derechos de l
       addSectionTitle('Documentos que deben acompañar a este modelo para conformar el expediente del cliente:');
       addText('1. Resolución de Nombramiento del Director de la entidad.', 28.35, doc.y, { indent: 20 });
       addText('2. Resolución o documento que faculta a la persona designada para firmar el Contrato.', 28.35, doc.y, { indent: 20 });
+
+      doc.end();
+    });
+  }
+  async generateComodatoPDF(formData: any): Promise<Buffer> {
+    return new Promise((resolve) => {
+      const doc = new PDFDocument({
+        size: 'A4',
+        margins: { top: 28.35, bottom: 28.35, left: 28.35, right: 28.35 },
+      });
+      const buffers: Buffer[] = [];
+
+      doc.on('data', buffers.push.bind(buffers));
+      doc.on('end', () => {
+        const pdfBuffer = Buffer.concat(buffers);
+        resolve(pdfBuffer);
+      });
+
+      // Register Arial Narrow fonts
+      const fontPathRegular = path.join(process.cwd(), 'fonts/arialn.ttf');
+      const fontPathBold = path.join(process.cwd(), 'fonts/arialnb.ttf');
+      if (!fs.existsSync(fontPathRegular) || !fs.existsSync(fontPathBold)) {
+        throw new Error(`Font files not found at ${fontPathRegular} or ${fontPathBold}`);
+      }
+      doc.registerFont('ArialNarrow', fontPathRegular);
+      doc.registerFont('ArialNarrow-Bold', fontPathBold);
+
+      doc.font('ArialNarrow').fontSize(14);
+
+      // Funciones auxiliares (reutilizadas)
+      interface TextOptions {
+        align?: 'left' | 'right' | 'center' | 'justify';
+        indent?: number;
+        width?: number;
+      }
+
+      const addText = (text: string, x: number, y: number, options: TextOptions = {}) => {
+        const pageWidth = 595.35;
+        const margin = 28.35;
+        const textWidth = pageWidth - 2 * margin;
+        doc.text(text, x, y, {
+          ...options,
+          width: textWidth,
+          align: options.align || 'justify',
+        });
+      };
+
+      const addSectionTitle = (title: string) => {
+        doc.font('ArialNarrow-Bold').fontSize(16);
+        addText(title, 28.35, doc.y, { align: 'center' });
+        doc.font('ArialNarrow').fontSize(14);
+        doc.moveDown(1);
+      };
+
+      const addTable = (headers: string[], rows: any[], startX: number, startY: number) => {
+        const pageWidth = 595.35;
+        const margin = 28.35;
+        const tableWidth = pageWidth - 2 * margin;
+        const colWidths = headers.map(() => tableWidth / headers.length);
+        const rowHeight = 20;
+        let y = startY;
+
+        doc.font('ArialNarrow-Bold');
+        headers.forEach((header, i) => {
+          doc.rect(startX + colWidths.slice(0, i).reduce((a, b) => a + b, 0), y, colWidths[i], rowHeight)
+            .fillAndStroke('#f0f0f0', '#000000');
+          addText(header, startX + colWidths.slice(0, i).reduce((a, b) => a + b, 0) + 4, y + 4, { align: 'center', width: colWidths[i] - 8 });
+        });
+        y += rowHeight;
+
+        doc.font('ArialNarrow');
+        rows.forEach((row) => {
+          row.forEach((cell: string, i: number) => {
+            doc.rect(startX + colWidths.slice(0, i).reduce((a, b) => a + b, 0), y, colWidths[i], rowHeight)
+              .stroke();
+            addText(cell, startX + colWidths.slice(0, i).reduce((a, b) => a + b, 0) + 4, y + 4, { align: 'justify', width: colWidths[i] - 8 });
+          });
+          y += rowHeight;
+        });
+
+        return y;
+      };
+
+      // Page 1: Título y Cláusulas 1-2
+      addSectionTitle('Contrato de Comodato');
+
+      addSectionTitle('DE UNA PARTE');
+      addText(
+        `${formData.comodanteNombre}, de nacionalidad ${formData.comodanteNacionalidad}, con domicilio social en ${formData.comodanteDomicilio}, municipio ${formData.comodanteMunicipio}, provincia La Habana, con carnet de identidad permanente ${formData.comodanteIdentidad}, teléfono ${formData.comodanteTelefono}, que en lo sucesivo y a los efectos del presente Contrato se denominará EL COMODANTE.`,
+        28.35,
+        doc.y
+      );
+      doc.moveDown(1);
+
+      addSectionTitle('DE OTRA PARTE');
+      addText(
+        `${formData.comodatarioNombre}, constituida mediante ${formData.comodatarioConstitucion} No. ${formData.comodatarioDecisionNumero} de fecha ${formData.comodatarioDecisionFecha}, con domicilio legal en ${formData.comodatarioDomicilio}, municipio ${formData.comodatarioMunicipio}, provincia ${formData.comodatarioProvincia}, de nacionalidad ${formData.comodatarioNacionalidad}, código REEUP y NIT: ${formData.comodatarioREEUPNIT}, Inscripción Registro Mercantil Libro ${formData.comodatarioLibro}, Tomo ${formData.comodatarioTomo}, Folio ${formData.comodatarioFolio}, Hoja ${formData.comodatarioHoja}, Cuenta bancaria No. ${formData.comodatarioCuentaBancaria}, teléfonos ${formData.comodatarioTelefonos}, dirección electrónica: ${formData.comodatarioEmail}, representada en este acto por ${formData.comodatarioRepresentante} en su condición de ${formData.comodatarioCondicion}, lo que acredita mediante ${formData.comodatarioDecision} No. ${formData.comodatarioDecisionNumero} de fecha ${formData.comodatarioDecisionFecha}, emitida por ${formData.comodatarioEmitidaPor}, notario con competencia provincial en ${formData.comodatarioNotarioProvincia} y sede en la ${formData.comodatarioNotarioSede}, provincia ${formData.comodatarioNotarioProvinciaSede}, que en lo sucesivo y a los efectos de este contrato se denominará EL COMODATARIO.`,
+        28.35,
+        doc.y
+      );
+      doc.moveDown(1);
+
+      addSectionTitle('AMBAS PARTES');
+      addText(
+        'Reconociéndose respectivamente la capacidad y representación con que comparecen convienen suscribir el presente Contrato bajo los términos y condiciones siguientes:',
+        28.35,
+        doc.y
+      );
+      doc.moveDown(1);
+
+      addSectionTitle('1. OBJETO DEL CONTRATO');
+      addText(
+        `1.1 Por el presente contrato EL COMODANTE se obliga a ceder gratuitamente al COMODATARIO el uso del ${formData.bienDescripción} cuyas descripciones aparecen detalladas en el ANEXO 1 al presente y EL COMODATARIO los devolverá una vez finalizado el tiempo pactado.\n1.2 EL COMODANTE declara que es propietario de los bienes que cede en comodato los cuales se destinarán al cumplimiento del Objeto Social aprobado a la empresa, estándole prohibido a EL COMODATARIO modificar el destino antes mencionado.`,
+        28.35,
+        doc.y
+      );
+      doc.moveDown(1);
+
+      addSectionTitle('2. OBLIGACIONES DE LAS PARTES');
+      addText(
+        `2.1 Obligaciones de EL COMODANTE:\n2.1.1 Entregar el bien en comodato referido en el ANEXO 1 del presente contrato a EL COMODATARIO.\n2.1.2 Garantizar a EL COMODATARIO la posesión pacífica del bien durante la vigencia del presente.\n2.1.3 Pagar los gastos extraordinarios en que haya incurrido EL COMODATARIO como consecuencia de la conservación del bien siempre que este le haya informado de tales pagos debidamente justificados.\n2.1.4 Reembolsar a EL COMODATARIO los gastos en que haya incurrido por daños originados por vicios ocultos del bien, siempre que los conociere y no los hubiese advertido oportunamente.\n2.2 Obligaciones de EL COMODATARIO:\n2.2.1 Usar el bien de acuerdo al destino señalado en la sub cláusula 1.2.\n2.2.2 Responder por los daños ocasionados al bien cuando lo use de modo contrario a lo pactado o a su naturaleza o destino.\n2.2.3 Pagar los gastos ordinarios que se derivan del uso y conservación del bien.\n2.2.4 Devolver el bien en el plazo previsto en el presente contrato.`,
+        28.35,
+        doc.y
+      );
+      doc.moveDown(1);
+
+      // Page 2: Cláusulas 3-6
+      doc.addPage();
+
+      addSectionTitle('3. CESIÓN');
+      addText(
+        `3.1 EL COMODATARIO no podrá ceder el bien objeto del presente a un tercero a menos que lo autorice EL COMODANTE.`,
+        28.35,
+        doc.y
+      );
+      doc.moveDown(1);
+
+      addSectionTitle('4. VIGENCIA, MODIFICACIÓN Y EXTINCIÓN DEL CONTRATO');
+      addText(
+        `4.1 La duración del presente Contrato será de ${formData.vigenciaAnios} años.\n4.1.1 LAS PARTES durante el cumplimiento del presente Contrato pueden acordar modificaciones a las obligaciones, condiciones y términos que se pactaron en el Contrato. Toda adición, modificación, especificación o enmienda que se pretenda realizar al presente Contrato, solamente podrá formalizarse mediante Suplementos que adquirirán plena validez y efecto legal a partir de la fecha de su firma por AMBAS PARTES contratantes.\n4.1.2 El presente Contrato se extinguirá por las siguientes causas:\n4.1.3 Muerte de EL COMODANTE o de EL COMODATARIO.\n4.1.4 Destinar EL COMODATARIO el bien a un uso incompatible con su naturaleza o distinto del pactado.\n4.1.5 Ceder EL COMODATARIO, sin permiso, a un tercero, el uso del bien.\n4.1.6 Reclamar EL COMODANTE el bien antes de haber vencido el término del contrato o de haber concluido el uso convenido, por tener necesidad urgente de él siempre con al menos 15 días de antelación a la fecha en que pretenda que surta efectos.\n4.1.7 El resto de las causas generales de extinción de los contratos.`,
+        28.35,
+        doc.y
+      );
+      doc.moveDown(1);
+
+      addSectionTitle('5. RECLAMACIONES');
+      addText(
+        `5.1 LAS PARTES podrán reclamarse mutuamente por el incumplimiento o cumplimiento inadecuado de sus obligaciones contractuales, por escrito, dentro de los quince (15) días naturales contados a partir de la fecha de ocurrencia del incumplimiento.\n5.2 Todas las reclamaciones se efectuarán por escrito en el domicilio legal de la otra Parte, debiendo la Parte reclamada dar respuesta dentro de los treinta (30) días naturales posteriores a la fecha de su notificación.\n5.3 Toda comunicación efectuada por medio del correo electrónico requerirá de su acuse de recibo como constancia de su recepción. De no recibirse el acuse en el término de cuarenta y ocho (48) horas, el emisor deberá utilizar otra vía de comunicación que permita poner en conocimiento del destinatario del correo electrónico que le ha sido enviada la información por la vía del correo electrónico.`,
+        28.35,
+        doc.y
+      );
+      doc.moveDown(1);
+
+      addSectionTitle('6. SOLUCIÓN DE CONFLICTOS');
+      addText(
+        `6.1 LAS PARTES se comprometen a cumplir el presente Contrato de buena fe, y a solucionar mediante negociaciones amigables las posibles discrepancias que surgieren en la ejecución del presente Contrato y/o en relación con el mismo, debiendo dejar evidencia escrita de las conciliaciones realizadas.\n6.2 De no llegarse a acuerdo someterán sus discrepancias a la decisión de la Sala de lo Económico del Tribunal Provincial Popular de La Habana, portando en todos los casos las evidencias escritas de las conciliaciones realizadas.`,
+        28.35,
+        doc.y
+      );
+      doc.moveDown(1);
+
+      // Page 3: Cláusulas 7-8 y Anexo 1
+      doc.addPage();
+
+      addSectionTitle('7. AVISO ENTRE LAS PARTES');
+      addText(
+        `7.1 Todos los avisos entre las partes se realizarán por correo electrónico u otros medios telemáticos y carta certificada a las siguientes direcciones:`,
+        28.35,
+        doc.y
+      );
+      doc.moveDown(1);
+
+      addSectionTitle('A EL COMODANTE');
+      const comodanteRows = [
+        ['Att.', formData.avisoComodanteAtt || 'Atención'],
+        ['Dirección:', formData.avisoComodanteDireccion || 'Dirección'],
+        ['Teléfono:', formData.avisoComodanteTelefono || 'Teléfono'],
+        ['E-mail:', formData.avisoComodanteEmail || 'Email'],
+      ];
+      doc.y = addTable(['Campo', 'Valor'], comodanteRows, 28.35, doc.y);
+      doc.moveDown(1);
+
+      addSectionTitle('A EL COMODATARIO');
+      const comodatarioRows = [
+        ['Att.', formData.avisoComodatarioAtt || 'Atención'],
+        ['Dirección:', formData.avisoComodatarioDireccion || 'Dirección'],
+        ['Teléfono:', formData.avisoComodatarioTelefono || 'Teléfono'],
+        ['E-mail:', formData.avisoComodatarioEmail || 'Email'],
+      ];
+      doc.y = addTable(['Campo', 'Valor'], comodatarioRows, 28.35, doc.y);
+      doc.moveDown(2);
+      addText('___________________', 28.35, doc.y, { align: 'left' });
+      addText('EL COMODANTE', 28.35, doc.y, { align: 'left' });
+      addText('___________________', 28.35 + 300, doc.y - 20, { align: 'left' });
+      addText('EL COMODATARIO', 28.35 + 300, doc.y, { align: 'left' });
+
+      doc.addPage();
+      addSectionTitle('ANEXO 1: DESCRIPCIÓN DE LOS BIENES');
+      const anexoRows = formData.anexoBienes.map((bien: any) => [
+        bien.nombre || 'Nombre del Bien',
+        bien.caracteristicas || 'Características',
+        bien.marca || 'Marca',
+        bien.modelo || 'Modelo',
+        bien.chapa || 'Chapa',
+      ]);
+      doc.y = addTable(
+        ['Nombre del Bien', 'Características', 'Marca', 'Modelo', 'Chapa'],
+        anexoRows,
+        28.35,
+        doc.y
+      );
+      doc.moveDown(2);
+      addText('___________________', 28.35, doc.y, { align: 'left' });
+      addText('EL COMODANTE', 28.35, doc.y, { align: 'left' });
+      addText('___________________', 28.35 + 300, doc.y - 20, { align: 'left' });
+      addText('EL COMODATARIO', 28.35 + 300, doc.y, { align: 'left' });
 
       doc.end();
     });
